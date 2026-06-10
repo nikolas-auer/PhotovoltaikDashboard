@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  # Der Web-Service für das Dashboard
+  dashboard:
+    build: .
+    ports:
+      - "5000:5000"
