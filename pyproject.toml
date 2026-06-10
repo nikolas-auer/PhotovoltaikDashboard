@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "PhotovoltaikDashboard"
+version = "0.1.0"
+description = "Code-Gerüst für das PhotovoltaikDashboard mit Stub-Files"
+authors = ["Nikolas Auer <nia0088@thi.de>"]
+readme = "README.md"
+packages = [{include = "pv_dashboard", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+flask = "^3.0"
+requests = "^2.31"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
