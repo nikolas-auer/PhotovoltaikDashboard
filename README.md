@@ -18,6 +18,7 @@ PhotovoltaikDashboard/
 │       ├── __init__.py         # Paket-Initialisierung (Facade Pattern)
 │       ├── calculation.py      # Analytics: Mathematische Integration & Statistiken
 │       ├── cleaning.py         # Validation: Datenvalidierung und Filterung
+│       ├── config.py           # Konfigurationsmodul
 │       ├── dashboard.py        # Presentation: Flask-Webfrontend und JSON-API
 │       ├── server.py           # Ingestion: Schnittstelle zur Sensor-API
 │       └── storage.py          # Persistence: Kapselung des Datenbankzugriffs (Repository Pattern)
@@ -45,6 +46,21 @@ PhotovoltaikDashboard/
    * **Trapezregel-Integration:** Berechnet aus den Momentanwerten (Leistung in W) die aufsummierte Energiearbeit (Energie in Wh), robust gegenüber schwankenden Messintervallen.
    * **Welfords Algorithmus:** Berechnet laufende Mittelwerte und Varianzen der Erzeugung mit stabiler numerischer Präzision (O(1)-Speicherkomplexität).
 5. **Presentation (`dashboard.py`):** Definiert die Flask-Routen zur Darstellung des HTML-Frontends und stellt einen JSON-API-Endpunkt für asynchrone Echtzeit-Abfragen bereit.
+6. **Configuration (`config.py`):** Kapselt alle Umgebungsvariablen und Konfigurationseinstellungen zentral an einem Ort via Dataclass.
+
+---
+
+## ⚙️ Konfiguration
+
+Das System lässt sich flexibel über Umgebungsvariablen anpassen. In der Klasse `Config` sind sichere Standardwerte hinterlegt:
+
+| Variable | Beschreibung | Standardwert |
+| :--- | :--- | :--- |
+| `PV_API_URL` | Ziel-Adresse des Sensor-Servers | `https://api.solar-thi.de/v1/metrics` |
+| `PV_API_KEY` | API-Token für die Authentifizierung | `""` |
+| `PV_DB_PATH` | Pfad zur lokalen SQLite-Datenbankdatei | `pv_metrics.db` |
+| `PV_MAX_REALISTIC_W` | Obergrenze zur Filterung von Sensorrauschen (Watt) | `20000.0` |
+| `PV_SCRAPING_INTERVAL` | Zeitabstand der API-Abfragen (Sekunden) | `5.0` |
 
 ---
 
