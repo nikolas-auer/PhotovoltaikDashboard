@@ -4,6 +4,7 @@ Unit-Tests für das cleaning.py Modul.
 
 import unittest
 from pv_dashboard.cleaning import PVDataCleaner
+from pv_dashboard.config import Config
 
 
 class TestPVDataCleaner(unittest.TestCase):
@@ -15,7 +16,8 @@ class TestPVDataCleaner(unittest.TestCase):
         """
         Wird vor jedem Test ausgeführt. Initialisiert den Cleaner.
         """
-        self.cleaner = PVDataCleaner()
+        self.config = Config()
+        self.cleaner = PVDataCleaner(config=self.config)
 
     def test_validate_schema_returns_boolean(self):
         """

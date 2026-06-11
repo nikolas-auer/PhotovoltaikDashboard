@@ -4,6 +4,7 @@ Unit-Tests für das storage.py Modul.
 
 import unittest
 from pv_dashboard.storage import PVDataRepository
+from pv_dashboard.config import Config
 
 
 class TestPVDataRepository(unittest.TestCase):
@@ -15,9 +16,9 @@ class TestPVDataRepository(unittest.TestCase):
         """
         Wird vor jedem Test ausgeführt.
         Nutzt ":memory:", um die Datenbank rein im Arbeitsspeicher (RAM) aufzubauen.
-        Dadurch werden keine temporären Testdateien auf der Festplatte abgelegt.
         """
-        self.repo = PVDataRepository(db_path=":memory:")
+        self.config = Config(db_path=":memory:")
+        self.repo = PVDataRepository(config=self.config)
 
     def test_save_data_point_stub(self):
         """

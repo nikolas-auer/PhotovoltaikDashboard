@@ -6,20 +6,15 @@ sowie API-Schnittstellen für das Frontend konfiguriert.
 """
 
 from flask import Flask
+from .config import Config
 
 
-def create_app(db_path: str = "pv_metrics.db") -> Flask:
+def create_app(config: Config = None, db_path: str = None) -> Flask:
     """
     Erstellt und konfiguriert die Flask-Webanwendung (Application Factory Pattern).
 
     Dieses Muster erlaubt es, die App flexibel mit verschiedenen Datenbank-Pfaden
     (z. B. einer echten Datei oder einer schnellen In-Memory-Datenbank für Tests) zu starten.
-
-    Argumente:
-        db_path: Pfad zur SQLite-Datenbank.
-
-    Rückgabewert:
-        Die fertige Flask-Applikationsinstanz.
     """
     app = Flask(__name__)
 
@@ -31,7 +26,6 @@ def create_app(db_path: str = "pv_metrics.db") -> Flask:
         Holt die historischen Daten der Datenbank, lässt die Gesamtenergie über das
         Berechnungsmodul integrieren und stellt die Werte in einem schönen UI dar.
         """
-        # Später: Laden der Historie und Rendern einer HTML-Vorlage
         return "<h1>Photovoltaik Dashboard (Gerüst lauffähig)</h1>"
 
     @app.route("/api/live")
@@ -40,7 +34,6 @@ def create_app(db_path: str = "pv_metrics.db") -> Flask:
         Ein API-Endpunkt, der den allerneuesten Datenpunkt als JSON liefert.
         Kann von Javascript-Skripten auf der Webseite abgefragt werden (Live-Updates).
         """
-        # Später: Abruf des neuesten Werts und JSON-Formatierung
         return {"status": "success", "message": "Stub-API aktiv"}
 
     return app

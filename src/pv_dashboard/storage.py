@@ -7,6 +7,7 @@ Es stellt sicher, dass historische Daten auch nach einem Systemabsturz erhalten 
 
 from datetime import datetime
 from typing import Any, Dict, List
+from .config import Config
 
 
 class PVDataRepository:
@@ -14,12 +15,13 @@ class PVDataRepository:
     Diese Klasse kapselt alle SQL-Befehle und verwaltet die SQLite-Verbindung.
     """
 
-    def __init__(self, db_path: str = "pv_metrics.db"):
+    def __init__(self, config: Config = None, db_path: str = None):
         """
-        Initialisiert das Repository und den Pfad zur Datenbankdatei.
-        Ruft direkt die Initialisierung der Tabellen auf.
+        Initialisiert das Repository. Nimmt entweder eine Config oder einen direkten
+        Pfad für Tests entgegen (z. B. ':memory:').
         """
-        self.db_path = db_path
+        self.config = config or Config()
+        self.db_path = db_path or self.config.db_path
         self.initialize_database()
 
     def initialize_database(self) -> None:
@@ -27,8 +29,7 @@ class PVDataRepository:
         Erstellt die SQLite-Tabelle, falls diese noch nicht auf der Festplatte existiert.
         Definiert Spalten für Zeitstempel, Erzeugung, Verbrauch und Status.
         """
-        # Später wird hier eine Verbindung mit sqlite3 aufgebaut
-        # und ein SQL-Befehl wie "CREATE TABLE IF NOT EXISTS pv_metrics..." ausgeführt.
+        # Später wird hier eine Verbindung mit sqlite3 aufgebaut.
         pass
 
     def save_data_point(self, data: Dict[str, Any]) -> bool:
@@ -41,7 +42,6 @@ class PVDataRepository:
         Rückgabewert:
             True, wenn das Speichern erfolgreich war, sonst False.
         """
-        # Hier wird der SQL-Insert-Befehl vorbereitet und ausgeführt.
         return True
 
     def get_historical_data(
@@ -55,5 +55,4 @@ class PVDataRepository:
         Rückgabewert:
             Eine Liste von Wörterbüchern (dict), die den SQL-Ergebnissen entsprechen.
         """
-        # Hier wird ein SELECT-Befehl mit Zeitfiltern (WHERE timestamp >= ?) ausgeführt.
         return []

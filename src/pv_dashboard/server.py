@@ -5,8 +5,8 @@ Dieses Modul ist dafür zuständig, die aktuellen Leistungsdaten der Photovoltai
 von der Schnittstelle abzufragen.
 """
 
-import os
 from typing import Any, Dict
+from .config import Config
 
 
 class PVDataCollector:
@@ -14,19 +14,12 @@ class PVDataCollector:
     Diese Klasse holt die aktuellen Leistungsdaten der PV-Anlage ab.
     """
 
-    def __init__(self, api_url: str = None, api_key: str = None):
+    def __init__(self, config: Config = None):
         """
-        Initialisiert den Datensammler mit der API-Adresse und dem Schlüssel.
-
-        Wenn keine Werte angegeben werden, sucht Python automatisch nach
-        Umgebungsvariablen (das erhöht die Sicherheit).
+        Initialisiert den Datensammler mit der API-Konfiguration.
         """
-        # Setzt die Ziel-URL
-        self.api_url = api_url or os.getenv(
-            "PV_API_URL", "https://api.solar-thi.de/v1/metrics"
-        )
-        # Setzt den API-Schlüssel
-        self.api_key = api_key or os.getenv("PV_API_KEY", "")
+        # Falls keine Config übergeben wird, erstellen wir eine Standard-Config.
+        self.config = config or Config()
         # Setzt ein Timeout (wie lange wir auf eine Antwort warten)
         self.timeout_seconds = 5.0
 
@@ -35,13 +28,10 @@ class PVDataCollector:
         Fragt den aktuellen Datenpunkt vom Server ab (GET-Request).
 
         Diese Funktion führt den Netzwerk-Aufruf durch und fängt eventuelle
-        Fehler (wie z. B. Verbindungsverlust, falsche Passwörter oder Server-Abstürze)
-        ab, damit das gesamte Programm nicht abstürzt.
+        Fehler ab, damit das gesamte Programm nicht abstürzt.
 
         Rückgabewert:
             Ein Python-Wörterbuch (dict) mit den gelieferten JSON-Werten.
         """
-        # Hier wird später der echte Aufruf mit dem requests-Modul implementiert.
-        # Beispiel: response = requests.get(self.api_url, headers=...)
         # Für das Gerüst (Stub) geben wir erst einmal ein leeres Wörterbuch zurück.
         return {}

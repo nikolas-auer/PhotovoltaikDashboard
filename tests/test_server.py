@@ -4,6 +4,7 @@ Unit-Tests für das server.py Modul.
 
 import unittest
 from pv_dashboard.server import PVDataCollector
+from pv_dashboard.config import Config
 
 
 class TestPVDataCollector(unittest.TestCase):
@@ -13,9 +14,10 @@ class TestPVDataCollector(unittest.TestCase):
 
     def setUp(self):
         """
-        Wird vor jedem Test ausgeführt. Initialisiert den Sammler.
+        Wird vor jedem Test ausgeführt. Initialisiert den Sammler mit Config.
         """
-        self.collector = PVDataCollector()
+        self.config = Config()
+        self.collector = PVDataCollector(config=self.config)
 
     def test_fetch_latest_data_structure(self):
         """
