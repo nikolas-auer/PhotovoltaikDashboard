@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photovoltaik-Dashboard</title>
+    <meta name="description" content="Modulares Echtzeit-Dashboard zur Überwachung von Photovoltaik-Erzeugung und Stromverbrauch">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+            --card-bg: rgba(30, 41, 59, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+
+            --color-gen: #10b981;      /* Smaragd-Grün für Erzeugung */
+            --color-con: #06b6d4;      /* Cyan für Verbrauch */
+            --color-ratio: #8b5cf6;    /* Violett für Autarkiegrad */
+            --color-warn: #f59e0b;
+
+            --glow-gen: 0 0 20px rgba(16, 185, 129, 0.25);
+            --glow-con: 0 0 20px rgba(6, 182, 212, 0.25);
+            --glow-ratio: 0 0 20px rgba(139, 92, 246, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        header {
+            max-width: 1400px;
+            margin: 0 auto 2rem auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 1.5rem;
+        }
+
+        header h1 {
+            font-size: 2.25rem;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-badge {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #38bdf8;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.4; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.4; }
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            main {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Glassmorphism Card Style */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+        }
+
+        .card-unit {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Card-Spezifische Farben */
+        .card-gen {
+            border-left: 4px solid var(--color-gen);
+        }
+        .card-gen .card-value {
+            color: var(--color-gen);
+            text-shadow: var(--glow-gen);
+        }
+
+        .card-con {
+            border-left: 4px solid var(--color-con);
+        }
+        .card-con .card-value {
+            color: var(--color-con);
+            text-shadow: var(--glow-con);
+        }
+
+        .card-ratio {
+            border-left: 4px solid var(--color-ratio);
+        }
+        .card-ratio .card-value {
+            color: var(--color-ratio);
+            text-shadow: var(--glow-ratio);
+        }
+
+
+
+
+
+        .badge-warn {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--color-warn);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* Charts Section Layout */
+        .charts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .chart-card {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-wrapper {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .donuts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .donuts-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .donut-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .donut-card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .donut-wrapper {
+            position: relative;
+            width: 140px;
+            height: 140px;
+        }
+
+        .donut-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+        }
+
+
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>☀️ Photovoltaik & Energie Dashboard</h1>
+        <div class="refresh-badge">
+            <span class="refresh-dot"></span>
+            Live (Aktualisierung alle 10s)
+        </div>
+    </header>
+
+    <main>
+        <!-- Linke Spalte: Key Performance Indicators (KPIs) -->
+        <div class="dashboard-grid">
+
+            <!-- Live-Erzeugung -->
+            <div class="card card-gen">
+                <div class="card-header">
+                    <span class="card-title">Aktuelle Erzeugung</span>
+                    <span class="badge-warn" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: var(--color-gen);">Live</span>
+                </div>
+                <div class="card-value" id="val-current-gen">
+                    {{ current_gen }} <span class="card-unit">W</span>
+                </div>
+                <div class="card-desc">Momentane Einspeiseleistung der Solarpaneele</div>
+            </div>
+
+            <!-- Live-Verbrauch -->
+            <div class="card card-con">
+                <div class="card-header">
+                    <span class="card-title">Aktueller Verbrauch</span>
+                    <span class="badge-warn" style="background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.2); color: var(--color-con);">Live</span>
+                </div>
+                <div class="card-value" id="val-current-con">
+                    {{ current_con }} <span class="card-unit">W</span>
+                </div>
+                <div class="card-desc">Momentaner Gesamthausverbrauch</div>
+            </div>
+
+            <!-- Tages-Erzeugung -->
+            <div class="card card-gen">
+                <div class="card-header">
+                    <span class="card-title">Tageserzeugung</span>
+                    <span class="card-desc">Heute</span>
+                </div>
+                <div class="card-value">
+                    {{ (daily_gen_wh / 1000.0) | round(2) if daily_gen_wh >= 1000 else daily_gen_wh }}
+                    <span class="card-unit">{{ 'kWh' if daily_gen_wh >= 1000 else 'Wh' }}</span>
+                </div>
+                <div class="card-desc">Integrierte Gesamtleistung seit Mitternacht</div>
+            </div>
+
+            <!-- Tages-Verbrauch -->
+            <div class="card card-con">
+                <div class="card-header">
+                    <span class="card-title">Tagesverbrauch</span>
+                    <span class="card-desc">Heute</span>
+                </div>
+                <div class="card-value">
+                    {{ (daily_con_wh / 1000.0) | round(2) if daily_con_wh >= 1000 else daily_con_wh }}
+                    <span class="card-unit">{{ 'kWh' if daily_con_wh >= 1000 else 'Wh' }}</span>
+                </div>
+                <div class="card-desc">Integrierter Gesamtverbrauch seit Mitternacht</div>
+            </div>
+
+            <!-- Monats-Erzeugung -->
+            <div class="card card-gen">
+                <div class="card-header">
+                    <span class="card-title">Monatserzeugung</span>
+                    <span class="card-desc">Aktueller Monat</span>
+                </div>
+                <div class="card-value">
+                    {{ (monthly_gen_wh / 1000.0) | round(2) if monthly_gen_wh >= 1000 else monthly_gen_wh }}
+                    <span class="card-unit">{{ 'kWh' if monthly_gen_wh >= 1000 else 'Wh' }}</span>
+                </div>
+                <div class="card-desc">Kumulierte Solarenergie im laufenden Monat</div>
+            </div>
+
+            <!-- Monats-Verbrauch -->
+            <div class="card card-con">
+                <div class="card-header">
+                    <span class="card-title">Monatsverbrauch</span>
+                    <span class="card-desc">Aktueller Monat</span>
+                </div>
+                <div class="card-value">
+                    {{ (monthly_con_wh / 1000.0) | round(2) if monthly_con_wh >= 1000 else monthly_con_wh }}
+                    <span class="card-unit">{{ 'kWh' if monthly_con_wh >= 1000 else 'Wh' }}</span>
+                </div>
+                <div class="card-desc">Kumulierter Stromverbrauch im laufenden Monat</div>
+            </div>
+
+            <!-- Jahres-Erzeugung -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Jahreserzeugung</span>
+                    <span class="card-desc">Aktuelles Jahr</span>
+                </div>
+                <div class="card-value">
+                    {{ (yearly_gen_wh / 1000.0) | round(2) if yearly_gen_wh >= 1000 else yearly_gen_wh }}
+                    <span class="card-unit">{{ 'kWh' if yearly_gen_wh >= 1000 else 'Wh' }}</span>
+                </div>
+                <div class="card-desc">Kumulierte Solarenergie im laufenden Jahr</div>
+            </div>
+
+            <!-- Jahres-Verbrauch -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Jahresverbrauch</span>
+                    <span class="card-desc">Aktuelles Jahr</span>
+                </div>
+                <div class="card-value">
+                    {{ (yearly_con_wh / 1000.0) | round(2) if yearly_con_wh >= 1000 else yearly_con_wh }}
+                    <span class="card-unit">{{ 'kWh' if yearly_con_wh >= 1000 else 'Wh' }}</span>
+                </div>
+                <div class="card-desc">Kumulierter Stromverbrauch im laufenden Jahr</div>
+            </div>
+
+        </div>
+
+        <!-- Rechte Spalte: Grafiken und Verhältnisse -->
+        <div class="charts-container">
+
+            <!-- Tortendiagramme / Autarkiegrade -->
+            <div class="card">
+                <h2 style="font-size: 1.15rem; margin-bottom: 1rem;">Verhältnis Verbrauch aus PV zu Gesamtverbrauch (Autarkie)</h2>
+                <div class="donuts-grid">
+
+                    <!-- Tag Donut -->
+                    <div class="donut-card">
+                        <h3>Tag</h3>
+                        <div class="donut-wrapper">
+                            <canvas id="chart-donut-day"></canvas>
+                            <div class="donut-percentage" id="donut-day-text">{{ daily_ratio | round(0) }}%</div>
+                        </div>
+                    </div>
+
+                    <!-- Monat Donut -->
+                    <div class="donut-card">
+                        <h3>Monat</h3>
+                        <div class="donut-wrapper">
+                            <canvas id="chart-donut-month"></canvas>
+                            <div class="donut-percentage" id="donut-month-text">{{ monthly_ratio | round(0) }}%</div>
+                        </div>
+                    </div>
+
+                    <!-- Jahr Donut -->
+                    <div class="donut-card">
+                        <h3>Jahr</h3>
+                        <div class="donut-wrapper">
+                            <canvas id="chart-donut-year"></canvas>
+                            <div class="donut-percentage" id="donut-year-text">{{ yearly_ratio | round(0) }}%</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Zeitverlauf (Tageserzeugung Wh & Tagesverbrauch W) -->
+            <div class="card chart-card">
+                <h2>📈 Leistungs- und Energiezeitverlauf (Heute)</h2>
+                <div class="chart-wrapper">
+                    <canvas id="chart-time-series"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Farbdefinitionen für Chart.js
+        const colorGen = '#10b981';
+        const colorCon = '#06b6d4';
+        const colorRatio = '#8b5cf6';
+        const gridColor = 'rgba(255, 255, 255, 0.06)';
+
+        // 1. Initialisierung der Donut-Charts (Autarkiegrad)
+        function createDonutChart(canvasId, value, mainColor) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            return new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [value, 100 - value],
+                        backgroundColor: [mainColor, 'rgba(255, 255, 255, 0.08)'],
+                        borderWidth: 0,
+                        hoverOffset: 0
+                    }]
+                },
+                options: {
+                    cutout: '78%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        const donutDay = createDonutChart('chart-donut-day', {{ daily_ratio }}, colorRatio);
+        const donutMonth = createDonutChart('chart-donut-month', {{ monthly_ratio }}, colorRatio);
+        const donutYear = createDonutChart('chart-donut-year', {{ yearly_ratio }}, colorRatio);
+
+        // 2. Initialisierung des kombinierten Zeitverlaufs-Charts
+        // y-Achse links: Tagesverbrauch in W
+        // y-Achse rechts: Kumulative Tageserzeugung in Wh
+        const ctxTimeSeries = document.getElementById('chart-time-series').getContext('2d');
+        const timeSeriesChart = new Chart(ctxTimeSeries, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Tagesverbrauch (Leistung in W)',
+                        data: [],
+                        borderColor: colorCon,
+                        backgroundColor: 'rgba(6, 182, 212, 0.05)',
+                        fill: true,
+                        yAxisID: 'yPower',
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 1,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: 'Tageserzeugung (Kumulative Energie in Wh)',
+                        data: [],
+                        borderColor: colorGen,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        yAxisID: 'yEnergy',
+                        tension: 0.1,
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#e2e8f0',
+                            font: { family: 'Inter', size: 12 }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        titleColor: '#f8fafc',
+                        bodyColor: '#cbd5e1'
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: gridColor },
+                        ticks: { color: '#94a3b8', font: { family: 'Inter' } }
+                    },
+                    yPower: {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Leistung (W)',
+                            color: colorCon,
+                            font: { family: 'Outfit', weight: 'bold', size: 12 }
+                        },
+                        grid: { color: gridColor },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    yEnergy: {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Kumulierte Energie (Wh)',
+                            color: colorGen,
+                            font: { family: 'Outfit', weight: 'bold', size: 12 }
+                        },
+                        grid: { drawOnChartArea: false }, // Verhindert doppelte Gitterlinien
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        // 3. Funktion zum Laden der historischen Chartdaten von der API
+        // y-Achse links: Tagesverbrauch in W
+        // y-Achse rechts: Kumulative Tageserzeugung in Wh
+        function loadChartData() {
+            fetch('/api/historical')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const labels = data.map(item => item.label);
+                        const conData = data.map(item => item.consumption_w);
+                        const genWhData = data.map(item => item.cumulative_gen_wh);
+
+                        timeSeriesChart.data.labels = labels;
+                        timeSeriesChart.data.datasets[0].data = conData;
+                        timeSeriesChart.data.datasets[1].data = genWhData;
+                        timeSeriesChart.update();
+                    }
+                })
+                .catch(err => console.error("Fehler beim Laden der historischen Chart-Daten:", err));
+        }
+
+        // 4. Funktion für periodische Live-Updates der Momentanwerte
+        function pollLiveMetrics() {
+            fetch('/api/live')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.status === 'success') {
+                        document.getElementById('val-current-gen').innerHTML = `${data.generation_w} <span class="card-unit">W</span>`;
+                        document.getElementById('val-current-con').innerHTML = `${data.consumption_w} <span class="card-unit">W</span>`;
+                    }
+                })
+                .catch(err => console.error("Fehler beim Abrufen der Live-Daten:", err));
+        }
+
+        // Beim Laden der Seite initial aufrufen
+        loadChartData();
+        pollLiveMetrics();
+
+        // Intervalle einrichten
+        setInterval(pollLiveMetrics, 10000);  // Alle 10 Sekunden Live-Daten pollen
+        setInterval(loadChartData, 60000);    // Alle 60 Sekunden das Chart aktualisieren
+    </script>
+</body>
+</html>
