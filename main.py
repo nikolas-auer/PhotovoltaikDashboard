@@ -11,6 +11,9 @@ import time
 from threading import Thread
 from pv_dashboard import Config
 from pv_dashboard.dashboard import create_app
+from pv_dashboard.server import PVDataCollector
+from pv_dashboard.cleaning import PVDataCleaner
+from pv_dashboard.storage import PVDataRepository
 
 # Konfiguration des Loggings (Ausgabe von Systemmeldungen auf dem Bildschirm / im Terminal)
 logging.basicConfig(
@@ -22,12 +25,37 @@ logger = logging.getLogger(__name__)
 def background_scraper_loop(config: Config):
     """
     Diese Funktion läuft kontinuierlich in einem eigenen Hintergrund-Thread.
-    Sie fragt alle X Sekunden den Server ab (Intervall aus Config).
+    Sie fragt alle X Sekunden den Server ab, bereinigt die Daten und speichert sie.
     """
     logger.info("Hintergrund-Scraper-Loop wurde gestartet...")
 
+    collector = PVDataCollector(config=config)
+    cleaner = PVDataCleaner(config=config)
+    repo = PVDataRepository(config=config)
+
     while True:
-        logger.info("Simuliere: Abfrage des nächsten Datenpunkts...")
+        try:
+            logger.info("Rufe aktuellen Datenpunkt von API ab...")
+            raw_data = collector.fetch_latest_data()
+            if raw_data:
+                cleaned_data = cleaner.clean_fields(raw_data)
+                if cleaned_data:
+                    success = repo.save_data_point(cleaned_data)
+                    if success:
+                        logger.info(
+                            f"Datenpunkt gespeichert: Erzeugung={cleaned_data['generation_w']}W, Verbrauch={cleaned_data['consumption_w']}W"
+                        )
+                    else:
+                        logger.warning("Speichern des Datenpunkts fehlgeschlagen.")
+                else:
+                    logger.warning(
+                        "Datenpunkt-Bereinigung ergab ungültige Daten (Schemafehler oder Ausreißer)."
+                    )
+            else:
+                logger.warning("Keine Rohdaten vom Server empfangen.")
+        except Exception as e:
+            logger.error(f"Unerwarteter Fehler im Scraper-Thread: {e}")
+
         time.sleep(config.scraping_interval_seconds)
 
 
