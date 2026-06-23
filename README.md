@@ -26,6 +26,7 @@ PhotovoltaikDashboard/
 ├── tests/                      # Automatisierte Testsuite (Unit- und Integrationstests)
 │
 ├── .dockerignore               # Schließt lokale Dateien beim Docker-Build aus
+├── .env.example                # Vorlage für Umgebungsvariablen
 ├── .gitignore                  # Schließt temporäre Dateien vom Git-Tracking aus
 ├── .pre-commit-config.yaml     # Konfiguration für die Git-Pre-Commit-Hooks
 ├── docker-compose.yml          # Container-Orchestrierung (Docker Compose)
@@ -44,7 +45,7 @@ PhotovoltaikDashboard/
 3. **Persistence (`storage.py`):** Verwaltet die lokale SQLite-Datenbank. Verhindert Datenredundanz durch ein transaktionssicheres UPSERT-Verfahren (Überschreiben bei identischen Zeitstempeln).
 4. **Analytics (`calculation.py`):** Führt numerische Berechnungen durch:
    * **Trapezregel-Integration:** Berechnet aus den Momentanwerten (Leistung in W) die aufsummierte Energiearbeit (Energie in Wh), robust gegenüber schwankenden Messintervallen.
-   * **Welfords Algorithmus:** Berechnet laufende Mittelwerte und Varianzen der Erzeugung mit stabiler numerischer Präzision (O(1)-Speicherkomplexität).
+   * **Welfords Algorithmus:** Berechnet laufende Mittelwerte und Varianzen der Erzeugung mit stabilem numerischer Präzision (O(1)-Speicherkomplexität).
 5. **Presentation (`dashboard.py`):** Definiert die Flask-Routen zur Darstellung des HTML-Frontends und stellt einen JSON-API-Endpunkt für asynchrone Echtzeit-Abfragen bereit.
 6. **Configuration (`config.py`):** Kapselt alle Umgebungsvariablen und Konfigurationseinstellungen zentral an einem Ort via Dataclass.
 
@@ -59,8 +60,8 @@ Das System lässt sich flexibel über Umgebungsvariablen anpassen. In der Klasse
 | `PV_API_URL` | Ziel-Adresse des Sensor-Servers | `https://api.solar-thi.de/v1/metrics` |
 | `PV_API_KEY` | API-Token für die Authentifizierung | `""` |
 | `PV_DB_PATH` | Pfad zur lokalen SQLite-Datenbankdatei | `pv_metrics.db` |
-| `PV_MAX_REALISTIC_W` | Obergrenze zur Filterung von Sensorrauschen (Watt) | `20000.0` |
-| `PV_SCRAPING_INTERVAL` | Zeitabstand der API-Abfragen (Sekunden) | `5.0` |
+| `PV_MAX_REALISTIC_W` | Obergrenze zur Filterung von Sensorrauschen (Watt) | `500000.0` |
+| `PV_SCRAPING_INTERVAL` | Zeitabstand der API-Abfragen (Sekunden) | `10.0` |
 
 ---
 
@@ -120,12 +121,21 @@ Das Dashboard ist anschließend unter [http://localhost:5000](http://localhost:5
 
 Die Anwendung ist vollständig containerisiert und kann ohne lokale Python-Installation gestartet werden.
 
-### Image bauen und starten
-```bash
-docker compose up --build
-```
+Bevor die Anwendung gestartet werden kann, müssen die API-Zugangsdaten konfiguriert werden.
 
-### Container stoppen und aufräumen
-```bash
-docker compose down
-```
+1. **Konfigurationsdatei erstellen:**
+   Kopiere die Vorlage:
+   ```bash
+   cp .env.example .env
+   ```
+   Öffne die Datei `.env` und trage deinen `PV_API_KEY` ein.
+
+2. **Image bauen und starten:**
+   ```bash
+   docker compose up --build
+   ```
+
+3. **Container stoppen und aufräumen:**
+   ```bash
+   docker compose down
+   ```

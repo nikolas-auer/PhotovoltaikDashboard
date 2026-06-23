@@ -48,7 +48,7 @@ class Config:
     """
 
     # 1. API-Verbindung zur PV-Anlage
-    pv_api_url: str = os.getenv("PV_API_URL", "https://api.solar-thi.de/v1/metrics")
+    pv_api_url: str = os.getenv("PV_API_URL", "")
     pv_api_key: str = os.getenv("PV_API_KEY", "")
 
     # 2. Intervall für den Hintergrund-Scraper (in Sekunden)
