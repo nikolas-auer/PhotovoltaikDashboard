@@ -128,7 +128,7 @@ Bevor die Anwendung gestartet werden kann, müssen die API-Zugangsdaten konfigur
    ```bash
    cp .env.example .env
    ```
-   Öffne die Datei `.env` und trage deinen `PV_API_KEY` ein.
+   Öffne die Datei `.env` und trage deinen `PV_API_KEY` und deine `PV_API_URL` ein.
 
 2. **Image bauen und starten:**
    ```bash
