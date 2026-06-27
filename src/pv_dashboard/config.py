@@ -55,7 +55,7 @@ class Config:
     scraping_interval_seconds: float = float(os.getenv("PV_SCRAPING_INTERVAL", "10.0"))
 
     # 3. Datenbank-Pfad
-    db_path: str = os.getenv("PV_DB_PATH", "pv_metrics.db")
+    db_path: str = os.getenv("PV_DB_PATH", "data/pv_metrics.db")
 
     # 4. Physikalische Grenzwerte (in Watt) für das Cleaning
     max_realistic_w: float = float(os.getenv("PV_MAX_REALISTIC_W", "500000.0"))
