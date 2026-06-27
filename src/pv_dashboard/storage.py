@@ -33,6 +33,12 @@ class PVDataRepository:
         Definiert Spalten für Zeitstempel, Erzeugung und Verbrauch.
         """
         import sqlite3
+        import os
+
+        # Datenbank-Ordner erstellen, falls noch nicht vorhanden
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
 
         try:
             with sqlite3.connect(self.db_path) as conn:
