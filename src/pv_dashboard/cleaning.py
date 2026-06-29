@@ -61,7 +61,7 @@ class PVDataCleaner:
 
         Regeln:
         1. Negative Leistungswerte werden auf 0.0 W gesetzt.
-        2. Werte über dem Limit (max_realistic_w) werden auf das Limit gedrosselt.
+        2. Gesamtsummen über dem Limit (max_realistic_w) werden auf das Limit gedrosselt.
         3. Falsche Datentypen werden in 0.0 W umgewandelt.
 
         Rückgabewert:
@@ -91,14 +91,18 @@ class PVDataCleaner:
             # 1. Negative Leistungswerte werden auf 0.0 W gesetzt
             if val < 0.0:
                 val = 0.0
-            # 2. Werte über dem Limit werden gedrosselt
-            elif val > self.config.max_realistic_w:
-                val = self.config.max_realistic_w
 
             if item["type"] == "generation":
                 total_generation += val
             elif item["type"] == "consumption":
                 total_consumption += val
+
+        # 2. Gesamtsummen über dem Limit werden gedrosselt
+        if total_generation > self.config.max_realistic_w:
+            total_generation = self.config.max_realistic_w
+
+        if total_consumption > self.config.max_realistic_w:
+            total_consumption = self.config.max_realistic_w
 
         return {
             "timestamp": timestamp,

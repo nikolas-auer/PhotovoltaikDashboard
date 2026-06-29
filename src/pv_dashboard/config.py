@@ -48,7 +48,7 @@ class Config:
     """
 
     # 1. API-Verbindung zur PV-Anlage
-    pv_api_url: str = os.getenv("PV_API_URL", "https://api.solar-thi.de/v1/metrics")
+    pv_api_url: str = os.getenv("PV_API_URL", "")
     pv_api_key: str = os.getenv("PV_API_KEY", "")
 
     # 2. Intervall für den Hintergrund-Scraper (in Sekunden)
@@ -58,4 +58,4 @@ class Config:
     db_path: str = os.getenv("PV_DB_PATH", "data/pv_metrics.db")
 
     # 4. Physikalische Grenzwerte (in Watt) für das Cleaning
-    max_realistic_w: float = float(os.getenv("PV_MAX_REALISTIC_W", "500000.0"))
+    max_realistic_w: float = float(os.getenv("PV_MAX_REALISTIC_W", "2000000.0"))

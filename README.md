@@ -4,6 +4,24 @@ Ein modulares Python-System zur Echtzeit-Erfassung, Bereinigung, Speicherung und
 
 Die Anwendung ist als leichtgewichtiges, containerisiertes System konzipiert, das im Hintergrund kontinuierlich Leistungsdaten von einer Sensor-API abfragt, validiert und persistiert, während ein interaktives Flask-Webinterface die historischen und aktuellen Metriken visualisiert.
 
+Dieses Projekt wurde als Einzelarbeit von Nikolas Auer durchgeführt. Alle Phasen der Entwicklung wurden eigenständig umgesetzt.
+
+---
+
+## 📡 Netzwerk & Voraussetzungen
+
+Für das Ausführen des Dashboards gelten folgende globale Bedingungen, unabhängig davon, ob Sie die Anwendung lokal oder über Docker starten:
+
+### 🌐 Netzwerkverbindung
+* **Offline-Modus:** Das Dashboard kann **vollständig offline** gestartet und betrieben werden. Es zeigt in diesem Fall die bereits in der lokalen SQLite-Datenbank (`data/pv_metrics.db`) gespeicherten historischen Daten an.
+* **Live-Daten:** Um **neue Live-Messwerte** von der Sensor-API abzurufen, ist eine aktive Verbindung mit dem **Campus-Netzwerk (eduroam)** oder dem **VPN der THI** zwingend erforderlich.
+
+### 💻 System-Anforderungen
+* **Lokales Setup:** Python 3.11 oder höher.
+* **Container-Setup (Docker):** Eine aktive Docker-Laufzeitumgebung.
+  * *Docker Desktop:* Die Desktop-Anwendung muss im Hintergrund geöffnet sein.
+  * *Colima (macOS):* Falls verwendet, muss die VM vorab mit `colima start` gestartet werden.
+
 ---
 
 ## 🛠️ Systemarchitektur
@@ -51,25 +69,34 @@ PhotovoltaikDashboard/
 
 ---
 
-## ⚙️ Konfiguration
+## 🐳 Containerisierung (Docker)
 
-Das System lässt sich flexibel über Umgebungsvariablen anpassen. In der Klasse `Config` sind sichere Standardwerte hinterlegt:
+Die Anwendung kann vollständig containerisiert ausgeführt werden. (Bitte beachten Sie vorab die globalen [Netzwerk- & Voraussetzungen](#-netzwerk--voraussetzungen)).
 
-| Variable | Beschreibung | Standardwert |
-| :--- | :--- | :--- |
-| `PV_API_URL` | Ziel-Adresse des Sensor-Servers | `https://api.solar-thi.de/v1/metrics` |
-| `PV_API_KEY` | API-Token für die Authentifizierung | `""` |
-| `PV_DB_PATH` | Pfad zur lokalen SQLite-Datenbankdatei | `pv_metrics.db` |
-| `PV_MAX_REALISTIC_W` | Obergrenze zur Filterung von Sensorrauschen (Watt) | `500000.0` |
-| `PV_SCRAPING_INTERVAL` | Zeitabstand der API-Abfragen (Sekunden) | `10.0` |
+Bevor die Anwendung gestartet werden kann, müssen die API-Zugangsdaten konfiguriert werden.
+
+1. **Konfigurationsdatei erstellen:**
+   Kopiere die Vorlage:
+   ```bash
+   cp .env.example .env
+   ```
+   Öffne die Datei `.env` und trage deinen `PV_API_KEY` und deine `PV_API_URL` ein.
+
+2. **Image bauen und starten:**
+   ```bash
+   docker compose up --build
+   ```
+
+3. **Container stoppen und aufräumen:**
+   ```bash
+   docker compose down
+   ```
 
 ---
 
-## 🚀 Installation und Setup
+## 🚀 Installation und lokales Setup
 
-### Voraussetzungen
-* Python 3.11 oder höher
-* Docker und Colima (für die containerisierte Ausführung)
+(Bitte beachten Sie vorab die globalen [Netzwerk- & Voraussetzungen](#-netzwerk--voraussetzungen)).
 
 ### 1. Lokales Setup (Virtuelle Umgebung)
 
@@ -114,28 +141,3 @@ PYTHONPATH=src python3 main.py
 ```
 
 Das Dashboard ist anschließend unter [http://localhost:5000](http://localhost:5000) erreichbar.
-
----
-
-## 🐳 Containerisierung (Docker)
-
-Die Anwendung ist vollständig containerisiert und kann ohne lokale Python-Installation gestartet werden.
-
-Bevor die Anwendung gestartet werden kann, müssen die API-Zugangsdaten konfiguriert werden.
-
-1. **Konfigurationsdatei erstellen:**
-   Kopiere die Vorlage:
-   ```bash
-   cp .env.example .env
-   ```
-   Öffne die Datei `.env` und trage deinen `PV_API_KEY` und deine `PV_API_URL` ein.
-
-2. **Image bauen und starten:**
-   ```bash
-   docker compose up --build
-   ```
-
-3. **Container stoppen und aufräumen:**
-   ```bash
-   docker compose down
-   ```
