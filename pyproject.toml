@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "PhotovoltaikDashboard"
-version = "0.1.0"
-description = "Code-Gerüst für das PhotovoltaikDashboard mit Stub-Files"
+version = "1.0.0"
+description = "Fertiges PhotovoltaikDashboard"
 authors = ["Nikolas Auer <nia0088@thi.de>"]
 readme = "README.md"
 packages = [{include = "pv_dashboard", from = "src"}]
